@@ -2,8 +2,8 @@
 
 const Footer = () => {
   return (
-    <footer>
-      <p>Copyrigh 2020 Bank Argent</p>
+    <footer className="footer">
+      <p className="footer-text">Copyright 2020 Argent Bank</p>
     </footer>
   );
 };

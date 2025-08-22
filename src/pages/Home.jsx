@@ -1,10 +1,11 @@
-
+import HeroSection from '../components/HeroSection/HeroSection';
+import FeaturesSection from '../components/FeaturesSection/FeaturesSection';
 
 const Home = () => {
   return (
     <main>
-      <h1>Welcome to Argent Bank</h1>
-      <p>This is the homepage.</p>
+      <HeroSection />
+      <FeaturesSection />
     </main>
   );
 };
