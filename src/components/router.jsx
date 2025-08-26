@@ -1,21 +1,25 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Header from "./Header/Header";
-import Footer from "./Footer/Footer";
-import Home from "../pages/Home";
-import Login from "../pages/Login";
-import Profile from "../pages/Profile";
+import Layout from "./Layout/Layout";
+
+import Home from "../pages/Home/Home";
+import Login from "../pages/Login/Login";
+import ProfilePage from "../pages/ProfilePage/ProfilePage";
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
-      <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="*" element={<h1>404 Not Found</h1>} />
+        {/* Route parent avec Header + Footer */}
+        <Route path="/" element={<Layout />}>
+          {/* Page d'accueil */}
+          <Route index element={<Home />} />
+          {/* Autres pages */}
+          <Route path="login" element={<Login />} />
+          <Route path="profile" element={<ProfilePage />} />
+          {/* 404 avec Header/Footer */}
+          <Route path="*" element={<h1>404 Not Found</h1>} />
+        </Route>
       </Routes>
-      <Footer />
     </BrowserRouter>
   );
 };

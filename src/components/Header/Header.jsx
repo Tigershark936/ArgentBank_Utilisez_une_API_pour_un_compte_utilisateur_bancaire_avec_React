@@ -15,8 +15,8 @@ const Header = () => {
 
       <div>
         <NavLink className="main-nav-item" to="/login">
-          <i className="fa fa-user-circle"></i>
-          Sign In
+          <i className="fa fa-user-circle" aria-hidden="true" />
+          {' '}Sign In
         </NavLink>
       </div>
     </nav>

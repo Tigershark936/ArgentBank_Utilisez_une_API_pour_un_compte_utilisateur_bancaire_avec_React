@@ -1,4 +1,4 @@
-import FeatureCard from '../FeatureCard/FeatureCard';
+import FeatureCard from './FeatureCard.jsx';
 import iconChat from "../../assets/img/icon-chat.png";
 import iconMoney from "../../assets/img/icon-money.png";
 import iconSecurity from "../../assets/img/icon-security.png";
@@ -31,9 +31,14 @@ const FeaturesSection = () => (
   <section className="features">
     <h2 className="sr-only">Features</h2>
     {features.map(({ icon, alt, title, text }) => (
-      <FeatureCard key={title} icon={icon} alt={alt} title={title}>
+        <FeatureCard 
+            key={title} 
+            icon={icon} 
+            alt={alt} 
+            title={title}
+        >
         {text}
-      </FeatureCard>
+        </FeatureCard>
     ))}
   </section>
 );
