@@ -11,7 +11,7 @@ const LoginForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // TODO: brancher ma future API ici
-    navigate("/user");
+    navigate("/profile");
   };
 
   return (
