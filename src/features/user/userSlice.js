@@ -12,6 +12,7 @@ const userSlice = createSlice({
     initialState,
     reducers: {
         // login = "L'utilisateur entre dans l'app"
+        // action.payload peut contenir (ex: le name)
         login: (state, action) => {
            state.isLogginIn = true  
            state.name = typeof action.payload === 'string'

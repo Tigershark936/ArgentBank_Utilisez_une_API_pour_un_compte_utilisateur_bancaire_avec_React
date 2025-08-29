@@ -4,11 +4,11 @@ import App from './App.jsx'
 //Le lien qui relie Redux ↔ React
 import { Provider } from 'react-redux';
 // Le store global
-import { store } from './Store/index.js';
+import { store } from './store/index.js';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* Toute l'app à maintenant accès au store glogal Redux */}
+    {/* Toute l'app à maintenant accès au store glogal Redux grâce à <Provider store={store}> */}
     <Provider store={store}>
       <App />
     </ Provider>
