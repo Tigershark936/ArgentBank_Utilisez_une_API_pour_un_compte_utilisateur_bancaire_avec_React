@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { loginSuccess } from "../../Features/user/userSlice";
+import { loginRequest, loginSuccess, loginFailure } from "../../features/user/userSlice";
 import InputField from './Form/InputField'
 
 const LoginForm = () => {
@@ -12,16 +12,12 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
 
+  const [isLoading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: brancher ma future API ici
-    // Pour l’instant on simule un succès
-    dispatch(
-      loginSuccess({
-        token: "fake123",      // plus tard je mettrai le vrai token que je n'arrive pas a avoir 
-        name: username,        // ici j’utilise username pour afficher le name dans le Header
-      })
-    );
+    dispatch(loginRequest());
     navigate("/profile");
   };
 

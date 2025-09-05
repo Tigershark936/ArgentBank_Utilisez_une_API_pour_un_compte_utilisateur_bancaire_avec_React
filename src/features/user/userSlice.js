@@ -46,6 +46,10 @@ const userSlice = createSlice({
             localStorage.removeItem("token"); // on nettoie le navigateur
         },
 
+        setProfileName: (state, action) => {
+            state.name = action.payload || null;
+        },
+
         // 🔵 Quand l'utilisateur se déconnecte ("Sign Out")
         logout: (state) => {
             state.token = null; // on retire le badge
