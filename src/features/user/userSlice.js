@@ -63,7 +63,7 @@ const userSlice = createSlice({
 })
 
 // j'exporte les actions (loginRequest, loginSuccess, loginFailure, logout) pour pouvoir les utiliser dans les composants React du projet.
-export const { loginRequest , loginSuccess, loginFailure, logout } = userSlice.actions
+export const { loginRequest , loginSuccess, loginFailure, setProfileName, logout } = userSlice.actions
 
 // J'exporte le reducer, pour l'ajouter dans le store Redux.
 export default userSlice.reducer

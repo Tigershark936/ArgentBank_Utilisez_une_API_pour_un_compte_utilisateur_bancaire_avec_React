@@ -3,7 +3,7 @@ import AccountCard from "./AccountCard";
 import useFetch from "../../hooks/useFetch";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { setProfileName } from "../../features/user/userSlice";
+import { setProfileName } from "../../features/user/userSlice.js";
 
 const accounts = [
   { id: "chk", title: "Argent Bank Checking (x8349)", amount: "$2,082.79", description: "Available Balance" },
@@ -22,6 +22,7 @@ const ProfilePage = () => {
 
   // 2) Dès que les données arrivent, je pousse le firstName dans Redux → pour le Header
   useEffect(() => {
+    console.log("Profile data = renvoie l’API", data);
     const firstName = data?.body?.firstName;
     if (firstName) {
       dispatch(setProfileName(firstName));
