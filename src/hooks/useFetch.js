@@ -40,6 +40,7 @@ const useFetch = (url, method = "GET", body = null) => {
         const fetchData = async () => {
             try {
                 setLoading(true);
+                
                 setError(null); 
 
                 // 1. Lancer la requête
