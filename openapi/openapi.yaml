@@ -47,7 +47,6 @@ paths: # Ici on définit les différentes routes (endpoints du backend)
             application/json:
               schema: 
                 $ref: "#/components/schemas/AccountsTransactionsResponse"
-        "400": { description: Le paramètre fourni est invalide }
         "401": { description: Authentification requise ou token invalide }
         "404": { description: Aucune transaction trouvée pour ce mois }
         "500": { description: Erreur interne du serveur }
@@ -80,38 +79,6 @@ paths: # Ici on définit les différentes routes (endpoints du backend)
         "500": { description: Erreur interne du serveur }
         
   # 3) Ajouter / modifier / supprimer des infos sur une transaction
-  /transactions/{id}/info:  # URL → /transactions/666/info
-    
-    post: # ➕ Ajouter
-      tags: 
-        - Transactions
-      summary: Ajouter des infos (category/note)
-      description: Ajoute category et/ou note à une transaction
-      parameters:
-        - in: path
-          name: id
-          description: ID de la transaction
-          required: true
-          schema:
-            type: string
-      requestBody: # Données envoyées
-        required: true
-        description: Données à ajouter
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TransactionInfo"
-      responses:
-        "201":
-          description: Crée # 📝 Créé
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TransactionResponse"
-        "400": { description: Les données fournies sont invalides }
-        "401": { description: Authentification requise ou token invalide }
-        "404": { description: Transaction introuvable pour l’ID donné }
-        "500": { description: Erreur interne du serveur }
 
     patch:  # ✏️ Modifier élément
       tags:
@@ -144,26 +111,6 @@ paths: # Ici on définit les différentes routes (endpoints du backend)
         "404": { description: Transaction introuvable pour l’ID donné }
         "500": { description: Erreur interne du serveur }
 
-    delete: # 🗑️ Supprimer
-      tags:
-        - Transactions
-      summary: Supprimer des informations (category/note)
-      description: Supprime category et/ou note (remet null)
-      parameters:
-        - in: path
-          name: id
-          description: ID de la transaction
-          required: true
-          schema:
-            type: string
-            example: "Transaction mise à jour avec succès (aucun contenu)"
-      responses:
-        "204": { description: Informations supprimées avec succès (aucun contenu retourné) }
-        "400": { description: L’identifiant fourni est invalide }
-        "401": { description: Authentification requise ou token invalide }
-        "404": { description: Transaction introuvable pour l’ID donné }
-        "500": { description: Erreur interne du serveur }
-
 components:
 
   securitySchemes:
@@ -178,6 +125,7 @@ components:
     Transaction:
       type: object
       properties:
+        account: { type: object, properties:  {id: {type: string}}}
         id: { type: string, example: "tr_666" }
         date: { type: string, format: date-time, example: "2025-09-01T12:15:30Z" }
         description: { type: string, example: "Golden Sun Bakery" }
@@ -205,24 +153,14 @@ components:
 
     # Réponse quand on liste toutes les transactions
     AccountsTransactionsResponse:
-      type: object
-      properties:
-        status: { type: integer, example: 200 }   # 200, 400, ...
-        message: { type: string, example: "OK" } # "OK", "Error" , ...
-        body:
-          type: object
-          properties:
-            accounts:
-              type: array
-              items:
-                $ref: "#/components/schemas/AccountTransactions"
+      type: array
+      items:
+        $ref: "#/components/schemas/Transaction"
 
     # Réponse quand on demande le détail d’une transaction
     TransactionResponse:
       type: object
       properties:
-        status: { type: integer, example: 200 }
-        message: { type: string, example: "OK" }
         body:
           $ref: "#/components/schemas/Transaction"
 

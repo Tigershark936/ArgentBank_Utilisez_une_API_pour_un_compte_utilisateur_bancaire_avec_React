@@ -23,7 +23,7 @@ const ProfilePage = () => {
     // - le premier pour LIRE le profil
     const { data: dataProfile, isLoading: isLoadingProfile, error: errorProfile, fetchRequest: fetchRequestGetProfile } = useFetch();
     // - le second pour METTRE À JOUR le profil
-    const { data: dataProfileUpdated, isLoading: isLoadingProfileUpdated, error: errorProfileUpdated, fetchRequest: fetchRequestUpdateProfile } = useFetch();
+    const { error: errorProfileUpdated, fetchRequest: fetchRequestUpdateProfile } = useFetch();
 
   // L’API demande un POST sur /user/profile avec Authorization: Bearer <token> pour avoir le bon profil auprès du serveur
     useEffect(() => {    
