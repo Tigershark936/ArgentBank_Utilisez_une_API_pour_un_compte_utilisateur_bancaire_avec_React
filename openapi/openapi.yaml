@@ -1,0 +1,231 @@
+openapi: 3.0.4
+
+info:
+  title: ArgentBank - Transactions API (Phase 2)
+  description: |
+    Documentation de proposition d'API pour la **phase phase 2 : Transactions**.
+    
+    Objectifs: 
+    - Visualiser toutes les transactions du **mois en cours**, groupées par compte.
+    - Voir le **Détails** d'une transaction.
+    - **Ajouter / modifier / supprimer** des informations sur une transaction.  
+  version: '1.0.0'
+
+servers: # Liste des serveurs disponibles et où l'API tourne
+  - url: http://localhost:3001/api/v1
+
+# Authentification: toutes les routes exigent un Bearer JWT (token) 'fake.token.demo'
+security:
+  - BearerAuth: []
+
+tags: # Catégories d'endpoints
+- name: Transactions
+  description: Opérations liées aux transactions des comptes
+
+paths: # Ici on définit les différentes routes (endpoints du backend)
+
+  # 1) Voir toutes les transactions du mois
+  /transactions: # Route principale pour les transactions de l'appli
+    get: # Méthode GET → sert à LIRE et à OBTENIR les infos
+
+      tags:
+        - Transactions
+      summary: Lister les transactions du mois (groupées par compte)
+      description: Retourne les transactions du mois demandé (ou courant si pas précisé).
+      parameters:
+        - in: query
+          name: month
+          description: Mois au format YYYY-MM
+          required: false
+          schema:
+            type: string
+            example: "2025-09"
+      responses:
+        "200":
+          description: Transactions récupérées avec succès
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/AccountsTransactionsResponse"
+        "400": { description: Le paramètre fourni est invalide }
+        "401": { description: Authentification requise ou token invalide }
+        "404": { description: Aucune transaction trouvée pour ce mois }
+        "500": { description: Erreur interne du serveur }
+
+  # 2) Voir le détail d’une transaction
+  /transactions/{id}: # URL → /transactions/666
+    get:
+      tags:
+        - Transactions
+      summary: Détail d'une transaction
+      description: Retourne une transaction précise par son ID
+      parameters:
+        - in: path
+          name: id
+          description: ID de la transaction
+          required: true
+          schema: 
+            type: string
+            example: "tr_666"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "400": { description: L’identifiant fourni est invalide }
+        "401": { description: Authentification requise ou token invalide }
+        "404": { description: La transaction demandée est introuvable }
+        "500": { description: Erreur interne du serveur }
+        
+  # 3) Ajouter / modifier / supprimer des infos sur une transaction
+  /transactions/{id}/info:  # URL → /transactions/666/info
+    
+    post: # ➕ Ajouter
+      tags: 
+        - Transactions
+      summary: Ajouter des infos (category/note)
+      description: Ajoute category et/ou note à une transaction
+      parameters:
+        - in: path
+          name: id
+          description: ID de la transaction
+          required: true
+          schema:
+            type: string
+      requestBody: # Données envoyées
+        required: true
+        description: Données à ajouter
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionInfo"
+      responses:
+        "201":
+          description: Crée # 📝 Créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "400": { description: Les données fournies sont invalides }
+        "401": { description: Authentification requise ou token invalide }
+        "404": { description: Transaction introuvable pour l’ID donné }
+        "500": { description: Erreur interne du serveur }
+
+    patch:  # ✏️ Modifier élément
+      tags:
+        - Transactions
+      summary: Modifier des infos (category/note)
+      description: Mettre à jour category et/ou note d’une transaction
+      parameters:
+        - in: path
+          name: id
+          description: ID de la transaction 
+          required: true
+          schema: 
+            type: string
+      requestBody: # Données envoyées
+        required: true
+        description: Données à modifier
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionInfo"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionResponse"
+        "400": { description: Les données fournies sont invalides }
+        "401": { description: Authentification requise ou token invalide }
+        "404": { description: Transaction introuvable pour l’ID donné }
+        "500": { description: Erreur interne du serveur }
+
+    delete: # 🗑️ Supprimer
+      tags:
+        - Transactions
+      summary: Supprimer des informations (category/note)
+      description: Supprime category et/ou note (remet null)
+      parameters:
+        - in: path
+          name: id
+          description: ID de la transaction
+          required: true
+          schema:
+            type: string
+            example: "Transaction mise à jour avec succès (aucun contenu)"
+      responses:
+        "204": { description: Informations supprimées avec succès (aucun contenu retourné) }
+        "400": { description: L’identifiant fourni est invalide }
+        "401": { description: Authentification requise ou token invalide }
+        "404": { description: Transaction introuvable pour l’ID donné }
+        "500": { description: Erreur interne du serveur }
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    
+    # Une transaction (ligne de relevé)
+    Transaction:
+      type: object
+      properties:
+        id: { type: string, example: "tr_666" }
+        date: { type: string, format: date-time, example: "2025-09-01T12:15:30Z" }
+        description: { type: string, example: "Golden Sun Bakery" }
+        amount: { type: number, example: 20.00 }
+        balance: { type: number, description: Solde après opération, example: 2097.79 }
+        category: { type: string, example: "Food" }
+        note: { type: string, example: "Resto du Week-end" }
+
+    # Les infos que l’utilisateur peut ajouter/modifier
+    TransactionInfo:
+      type: object
+      properties:
+        category: { type: string, example: "Food" }
+        note: { type: string, example: "Resto du Week-end" }
+
+    # Les transactions regroupées par compte
+    AccountTransactions:
+      type: object
+      properties:
+        accountId: { type: string, example: "acc_987"}
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    # Réponse quand on liste toutes les transactions
+    AccountsTransactionsResponse:
+      type: object
+      properties:
+        status: { type: integer, example: 200 }   # 200, 400, ...
+        message: { type: string, example: "OK" } # "OK", "Error" , ...
+        body:
+          type: object
+          properties:
+            accounts:
+              type: array
+              items:
+                $ref: "#/components/schemas/AccountTransactions"
+
+    # Réponse quand on demande le détail d’une transaction
+    TransactionResponse:
+      type: object
+      properties:
+        status: { type: integer, example: 200 }
+        message: { type: string, example: "OK" }
+        body:
+          $ref: "#/components/schemas/Transaction"
+
+
+
+        
