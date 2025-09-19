@@ -166,7 +166,8 @@ User Profile
 
 For phase 2 of the project, an extended API proposal was documented in OpenAPI 3.0.4.
 
-👉 Full documentation: [openapi.yaml](./openapi.yaml)
+👉 Full documentation: [openapi.yaml](./openapi/openapi.yaml)
+
 
 Goals:
 
