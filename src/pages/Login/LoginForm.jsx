@@ -13,9 +13,15 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
 
+  // Rajout de l'état pour le bouton avec en + le message d'erreur
+  const [loading, setLoading] = useState(false);  
+  const [error, setError] = useState(null);   
+
   const handleSubmit = async (e) => {
     e.preventDefault();         
     dispatch(loginRequest());
+    setLoading(true);
+    setError(null);            
 
     try {
 
@@ -34,15 +40,13 @@ const LoginForm = () => {
 
       // 3) si le HTTP n’est pas OK
       if (!res.ok) {
-        // ❌ Si le serveur me répond avec une erreur HTTP (ex: 400, 401, 500…)
-        const msg = (json && (json.message || json.error)) || `HTTP ${res.status}`;
-        throw new Error(msg);
+        throw new Error("Identifiants ou mot de passe incorrects");
       }
 
       // 4) je récupère le token renvoyé par l’API
       const token = json?.body?.token;
-      // SI pas de token dans la réponse → ça veut dire que le login a échoué
-      if (!token) throw new Error("Token manquant dans la réponse API");
+      // SI pas de token dans la réponse → ça veut dire que le login a échoué + msg
+      if (!token) throw new Error("Identifiants ou mot de passe incorrects");
 
       // 5) je sauvegarde le token (Redux + localStorage dans le reducer)
       dispatch(loginSuccess({ token }));
@@ -56,9 +60,14 @@ const LoginForm = () => {
 
       navigate("/profile");
 
-    } catch (err) {
+    } catch {
       // 🔴 status = FAILED
-      dispatch(loginFailure(err.message || "Login failed"));
+      const msg = "Identifiants ou mot de passe incorrects"; 
+      dispatch(loginFailure(msg));
+      // j'affiche comme ça un msg pour l'UI gràce a l'état
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,7 +78,10 @@ const LoginForm = () => {
         label="Username"
         type="text"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        onChange={(e) => {
+          setUsername(e.target.value);
+          setError(null);
+        }}
         autoComplete="username"
         required
       />
@@ -79,7 +91,10 @@ const LoginForm = () => {
         label="Password"
         type="password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          setError(null);       
+        }}
         autoComplete="current-password"
         required
       />
@@ -94,8 +109,25 @@ const LoginForm = () => {
         <label htmlFor="remember-me">Remember me</label>
       </div>
 
-      <button type="submit" className="sign-in-button">
-        Sign In
+      {/* AJOUT: message d'erreur en rouge pour l'UI*/}
+      {error && (
+        <p
+          role="alert"
+          aria-live="polite"
+          style={{ 
+            color: "crimson",
+            marginTop: 8,
+            fontWeight: "bold",
+            fontFamily: "Helvetica, Arial, sans-serif"
+           }}
+        >
+          {error}
+        </p>
+      )}
+
+      {/* Rajout: d'un effet de texte dynamique pour montrer le loading avec le backend */}
+      <button type="submit" className="sign-in-button" disabled={loading}>
+        {loading ? "Loading …" : "Sign In"} 
       </button>
     </form>
   );
