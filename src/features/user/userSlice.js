@@ -4,11 +4,10 @@ import { AUTH_STATUS } from './authStatus.js';
 // ÉTAT DE DÉPART : personne n'est connecté
 const initialState = {
     token: localStorage.getItem("token") || null, // Je récupère la valeur associée à la clé "token" dans le localStorage (si elle existe), sinon je mets null par défaut
-    isLoggedIn: false, // false = pas connecté, true = connecté
-    name: null, // Et je stocke le nom affiché en + (par ex. "Tony Stark")
-    status: AUTH_STATUS.NOT_STARTED, // état initial où rien n'est lancé encore
+    isLoggedIn: !!localStorage.getItem("token"), // false = pas connecté, true = connecté 
+    name: localStorage.getItem("name") ?? null, // Et je stocke le nom affiché en + (par ex. "Tony Stark"),et restaure depuis le localStorage si dispo
+    status: localStorage.getItem("token") ? AUTH_STATUS.SUCCEEDED : AUTH_STATUS.NOT_STARTED, // état initial où rien n'est lancé encore, ou succès si token présent
     error: null, // message d'erreur (ex. mauvais mot de passe)
-    
 }
 
 // Je crée le rayon (slice) user 
@@ -34,6 +33,7 @@ const userSlice = createSlice({
             state.error = null; // aucune erreur
 
             if (token) localStorage.setItem("token", token); // on garde le token dans le navigateur
+            if (name) localStorage.setItem("name", name); // on garde aussi le nom dans le navigateur
         },
 
         // 🔴 Quand le serveur répond avec une erreur (mauvais mdp, serveur HS(backend))
@@ -44,10 +44,16 @@ const userSlice = createSlice({
             state.status = AUTH_STATUS.FAILED; // échec du login
             state.error = action.payload || "Login failed"; // message d'erreur
             localStorage.removeItem("token"); // on nettoie le navigateur
+            localStorage.removeItem("name"); // on nettoie aussi le nom
         },
 
         setProfileName: (state, action) => {
             state.name = action.payload || null;
+            if (state.name) {
+                localStorage.setItem("name", state.name); // on stocke le nom quand on le connaît
+            } else {
+                localStorage.removeItem("name"); // supprime si null
+            }
         },
 
         // 🔵 Quand l'utilisateur se déconnecte ("Sign Out")
@@ -58,6 +64,7 @@ const userSlice = createSlice({
             state.status = AUTH_STATUS.NOT_STARTED; // retour à l'état initial
             state.error = null; // aucune erreur
             localStorage.removeItem("token"); // on efface le token dans le navigateur
+            localStorage.removeItem("name"); // on efface le nom
         },
     }
 })
