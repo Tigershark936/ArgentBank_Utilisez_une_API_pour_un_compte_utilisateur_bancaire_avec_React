@@ -2,16 +2,35 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { AUTH_STATUS } from './authStatus.js';
 
 // THUNK ASYNCHRONE 
-export const fetchUserById = createAsyncThunk(
-    'user/fetchByIdStatus',
-    async (userId, thunkAPI) => {
+export const authUser = createAsyncThunk(
+    'user/auth', // NEW: identifiant d'action exact demandé
+    async ({ email, password }, { rejectWithValue }) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/v1/users/${userId}`);
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.message || "Fetch failed");
-            return data;
-        } catch (err) {
-            return thunkAPI.rejectWithValue(err.message);
+            // 1) j’appelle l’API de login avec email+password
+            const res = await fetch('http://localhost:3001/api/v1/user/login', {
+                method: 'POST', // envoi des données au serveur pour créer ou vérifier quelque chose.
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email: email.trim(), 
+                    password 
+                }),
+            })
+
+            // 2) je tente de lire la réponse (JSON)
+            const json = await res.json().catch(() => null)
+            console.log("[Login] Réponse JSON :", json);
+            
+            // 3) si le HTTP n’est pas OK
+            if (!res.ok) return rejectWithValue('Identifiants ou mot de passe incorrects')
+
+            // 4) je récupère le token renvoyé par l’API    
+            const token = json?.body?.token
+            // SI pas de token dans la réponse → ça veut dire que le login a échoué + msg
+            if (!token) return rejectWithValue('Identifiants ou mot de passe incorrects')
+
+            return token
+        } catch {
+        return rejectWithValue('Identifiants ou mot de passe incorrects')
         }
     }
 );
@@ -23,7 +42,6 @@ const initialState = {
     name: localStorage.getItem("name") ?? null, // Et je stocke le nom affiché en + (par ex. "Tony Stark"),et restaure depuis le localStorage si dispo
     status: localStorage.getItem("token") ? AUTH_STATUS.SUCCEEDED : AUTH_STATUS.NOT_STARTED, // état initial où rien n'est lancé encore, ou succès si token présent
     error: null, // message d'erreur (ex. mauvais mot de passe)
-    entities: [],
 }
 
 // Je crée le rayon (slice) user 
@@ -31,38 +49,6 @@ const userSlice = createSlice({
     name: 'user',
     initialState,
     reducers: {
-        // 🔵 Quand l'utilisateur clique sur "Sign In"
-        loginRequest: (state) => {
-            state.status = AUTH_STATUS.LOADING; // on passe en "chargement"
-            state.error = null;                 // on efface les erreurs précédentes
-        },
-
-        // 🟢 Quand le serveur répond OK avec un token
-        // action.payload doit contenir { token, name }
-        loginSuccess: (state, action) => {
-            const { token, name } = action.payload || {};
-        
-            state.token = token || null; // on garde le token reçu
-            state.isLoggedIn = !!token; // connecté si on a bien un token
-            state.name = name ?? null; // on enregistre le nom si fourni
-            state.status = AUTH_STATUS.SUCCEEDED; // succès
-            state.error = null; // aucune erreur
-
-            if (token) localStorage.setItem("token", token); // on garde le token dans le navigateur
-            if (name) localStorage.setItem("name", name); // on garde aussi le nom dans le navigateur
-        },
-
-        // 🔴 Quand le serveur répond avec une erreur (mauvais mdp, serveur HS(backend))
-        // action.payload = message d'erreur
-        loginFailure: (state, action) => {
-            state.token = null; // pas de badge
-            state.isLoggedIn = false; // pas connecté
-            state.status = AUTH_STATUS.FAILED; // échec du login
-            state.error = action.payload || "Login failed"; // message d'erreur
-            localStorage.removeItem("token"); // on nettoie le navigateur
-            localStorage.removeItem("name"); // on nettoie aussi le nom
-        },
-
         setProfileName: (state, action) => {
             state.name = action.payload || null;
             if (state.name) {
@@ -87,26 +73,38 @@ const userSlice = createSlice({
     // Gestion des 3 cas du thunk (pending / fulfilled / rejected)
     extraReducers: (builder) => {
         builder
-        // pending (en attente)
-        .addCase(fetchUserById.pending, (state) => {
+        // 🔵 Quand l'utilisateur clique sur "Sign In"
+        // pending (en attente) "remplace mon loginRequest"
+        .addCase(authUser.pending, (state) => {
             state.status = AUTH_STATUS.LOADING;
             state.error = null;
         })
-        // fulfilled (accompli)
-        .addCase(fetchUserById.fulfilled, (state, action) => {
-            state.status = AUTH_STATUS.SUCCEEDED;
-            state.entities.push(action.payload);
-        })  
-        //  rejected (rejeté)
-        .addCase(fetchUserById.rejected, (state, action) => {
-            state.status = AUTH_STATUS.FAILED;
-            state.error = action.payload || "Impossible de récupérer l'utilisateur";
+        // 🟢 Quand le serveur répond OK avec un token
+        // fulfilled (accompli) "remplace mon loginSuccess"
+        .addCase(authUser.fulfilled, (state, action) => {
+            const token = action.payload // le thunk renvoie un token string
+            state.token = token; // on garde le token reçu
+            state.isLoggedIn = true // connecté si on a bien un token
+            state.status = AUTH_STATUS.SUCCEEDED; // succès
+            state.error = null; // aucune erreur
+
+            if (token) localStorage.setItem("token", token); // on garde le token dans le navigateur
+        }) 
+        // 🔴 Quand le serveur répond avec une erreur (mauvais mdp, serveur HS(backend)) 
+        //  rejected (rejeté) "remplace mon loginFailure"
+        .addCase(authUser.rejected, (state, action) => {
+            state.token = null; // on retire le badge
+            state.isLoggedIn = false; // plus connecté
+            state.status = AUTH_STATUS.FAILED; // échec du login
+            state.error = action.payload || "Impossible de récupérer l'utilisateur"; // message d'erreur
+            localStorage.removeItem("token"); // on efface le token dans le navigateur
+            localStorage.removeItem("name"); // on efface le nom            
         });
     }
 })
 
-// j'exporte les actions (loginRequest, loginSuccess, loginFailure, logout) pour pouvoir les utiliser dans les composants React du projet.
-export const { loginRequest , loginSuccess, loginFailure, setProfileName, logout } = userSlice.actions
+// j'exporte les actions (setProfileName, logout) pour pouvoir les utiliser dans les composants React du projet.
+export const { setProfileName, logout } = userSlice.actions
 
 // J'exporte le reducer, pour l'ajouter dans le store Redux.
 export default userSlice.reducer

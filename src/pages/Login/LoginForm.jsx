@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState , useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { loginRequest, loginSuccess, loginFailure } from "../../features/user/userSlice";
+import { useDispatch , useSelector } from "react-redux";
+import { authUser } from "../../features/user/userSlice";
 import { AUTH_STATUS } from "../../features/user/authStatus";
 import InputField from './Form/InputField'
 
@@ -11,65 +11,25 @@ const LoginForm = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  // purement visuel 
   const [remember, setRemember] = useState(false);
 
   // Rajout de l'état pour le bouton avec en + le message d'erreur
-  const [loading, setLoading] = useState(false);  
-  const [error, setError] = useState(null);   
+  const { status, error, isLoggedIn } = useSelector((s) => s.user)
+  const loading = status === AUTH_STATUS.LOADING
 
   const handleSubmit = async (e) => {
     e.preventDefault();         
-    dispatch(loginRequest());
-    setLoading(true);
-    setError(null);            
-
-    try {
-
-      // 1) j’appelle l’API de login avec email+password
-      const res = await fetch("http://localhost:3001/api/v1/user/login", {
-        method: "POST", // envoi des données au serveur pour créer ou vérifier quelque chose.
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email: username.trim(), 
-          password }),
-      });
-
-      // 2) je tente de lire la réponse (JSON) 
-      const json = await res.json().catch(() => null);
-      console.log("[Login] Réponse JSON :", json);
-
-      // 3) si le HTTP n’est pas OK
-      if (!res.ok) {
-        throw new Error("Identifiants ou mot de passe incorrects");
-      }
-
-      // 4) je récupère le token renvoyé par l’API
-      const token = json?.body?.token;
-      // SI pas de token dans la réponse → ça veut dire que le login a échoué + msg
-      if (!token) throw new Error("Identifiants ou mot de passe incorrects");
-
-      // 5) je sauvegarde le token (Redux + localStorage dans le reducer)
-      dispatch(loginSuccess({ token }));
-
-      // 6) “Remember me”
-      if (remember) {
-        localStorage.setItem("remember", "1");
-      } else {
-        localStorage.removeItem("remember");
-      }
-
-      navigate("/profile");
-
-    } catch {
-      // 🔴 status = FAILED
-      const msg = "Identifiants ou mot de passe incorrects"; 
-      dispatch(loginFailure(msg));
-      // j'affiche comme ça un msg pour l'UI gràce a l'état
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+    dispatch(authUser({ email: username, password }))           
   };
+  
+  // La redirection après succès d'authentification
+  useEffect(() => {
+    if (isLoggedIn && status === AUTH_STATUS.SUCCEEDED) {
+      navigate("/profile");
+    }
+  }, [isLoggedIn, status, navigate])
 
   return (
     <form onSubmit={handleSubmit}>
@@ -80,7 +40,6 @@ const LoginForm = () => {
         value={username}
         onChange={(e) => {
           setUsername(e.target.value);
-          setError(null);
         }}
         autoComplete="username"
         required
@@ -92,8 +51,7 @@ const LoginForm = () => {
         type="password"
         value={password}
         onChange={(e) => {
-          setPassword(e.target.value);
-          setError(null);       
+          setPassword(e.target.value);      
         }}
         autoComplete="current-password"
         required
@@ -110,7 +68,7 @@ const LoginForm = () => {
       </div>
 
       {/* AJOUT: message d'erreur en rouge pour l'UI*/}
-      {error && (
+      {status === AUTH_STATUS.FAILED && error && (
         <p
           role="alert"
           aria-live="polite"
