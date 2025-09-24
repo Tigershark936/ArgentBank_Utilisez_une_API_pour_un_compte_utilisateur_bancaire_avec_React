@@ -48,7 +48,6 @@ paths: # Ici on définit les différentes routes (endpoints du backend)
               schema: 
                 $ref: "#/components/schemas/AccountsTransactionsResponse"
         "401": { description: Authentification requise ou token invalide }
-        "404": { description: Aucune transaction trouvée pour ce mois }
         "500": { description: Erreur interne du serveur }
 
   # 2) Voir le détail d’une transaction

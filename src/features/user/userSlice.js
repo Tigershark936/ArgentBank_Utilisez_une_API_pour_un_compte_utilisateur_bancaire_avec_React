@@ -1,5 +1,20 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { AUTH_STATUS } from './authStatus.js';
+
+// THUNK ASYNCHRONE 
+export const fetchUserById = createAsyncThunk(
+    'user/fetchByIdStatus',
+    async (userId, thunkAPI) => {
+        try {
+            const res = await fetch(`http://localhost:3001/api/v1/users/${userId}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.message || "Fetch failed");
+            return data;
+        } catch (err) {
+            return thunkAPI.rejectWithValue(err.message);
+        }
+    }
+);
 
 // ÉTAT DE DÉPART : personne n'est connecté
 const initialState = {
@@ -8,6 +23,7 @@ const initialState = {
     name: localStorage.getItem("name") ?? null, // Et je stocke le nom affiché en + (par ex. "Tony Stark"),et restaure depuis le localStorage si dispo
     status: localStorage.getItem("token") ? AUTH_STATUS.SUCCEEDED : AUTH_STATUS.NOT_STARTED, // état initial où rien n'est lancé encore, ou succès si token présent
     error: null, // message d'erreur (ex. mauvais mot de passe)
+    entities: [],
 }
 
 // Je crée le rayon (slice) user 
@@ -66,6 +82,26 @@ const userSlice = createSlice({
             localStorage.removeItem("token"); // on efface le token dans le navigateur
             localStorage.removeItem("name"); // on efface le nom
         },
+    },
+
+    // Gestion des 3 cas du thunk (pending / fulfilled / rejected)
+    extraReducers: (builder) => {
+        builder
+        // pending (en attente)
+        .addCase(fetchUserById.pending, (state) => {
+            state.status = AUTH_STATUS.LOADING;
+            state.error = null;
+        })
+        // fulfilled (accompli)
+        .addCase(fetchUserById.fulfilled, (state, action) => {
+            state.status = AUTH_STATUS.SUCCEEDED;
+            state.entities.push(action.payload);
+        })  
+        //  rejected (rejeté)
+        .addCase(fetchUserById.rejected, (state, action) => {
+            state.status = AUTH_STATUS.FAILED;
+            state.error = action.payload || "Impossible de récupérer l'utilisateur";
+        });
     }
 })
 
